@@ -9,7 +9,7 @@ Real-time Claude API usage tracking for Claude Code's statusline with visual pro
 ## Preview
 
 ```
-🤖 Opus 4.5 │ 🔋 ████░░░░░░ 42% │ 📊 ██░░░░░░░░ 15% │ ⏱️ 2h34m
+Opus 4.5 │ U:████░░░░░░  42% │ C:██░░░░░░░░  15% │ 2h34m
 ```
 
 ## Features
@@ -105,14 +105,14 @@ Add to `~/.claude/settings.json`:
 
 | Component | Description |
 |-----------|-------------|
-| 🤖 Model | Current Claude model (Opus 4.5, Sonnet 4, etc.) |
-| 🔋 Usage | API usage percentage (5-hour rolling window) |
-| 📊 Context | Context window consumption |
-| ⏱️ Reset | Time until usage limit resets |
+| Model | Current Claude model (Opus 4.5, Sonnet 4, etc.) |
+| U: | API usage percentage (5-hour rolling window) |
+| C: | Context window consumption |
+| Timer | Time until usage limit resets |
 
 ## Color Coding
 
-### API Usage (🔋)
+### API Usage (U:)
 
 | Usage | Color |
 |-------|-------|
@@ -122,11 +122,11 @@ Add to `~/.claude/settings.json`:
 | 51-70% | Orange |
 | 71-100% | Red |
 
-### Context Window (📊)
+### Context Window (C:)
 
 Cyan → Blue → Purple gradient as context fills up.
 
-### Reset Timer (⏱️)
+### Reset Timer
 
 | Time Remaining | Color | Meaning |
 |----------------|-------|---------|
