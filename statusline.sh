@@ -5,17 +5,9 @@
 export LC_NUMERIC=C
 input=$(cat)
 
-# Current session info from stdin
-MODEL=$(echo "$input" | jq -r '.model.display_name')
-CONTEXT_REMAINING=$(echo "$input" | jq -r '.context_window.remaining_percentage // empty')
-CONTEXT_USED=$(echo "$input" | jq -r '.context_window.used_percentage // empty')
-
-# Display context usage (prefer used percentage)
-if [ -n "$CONTEXT_USED" ]; then
-    CONTEXT_PCT=$(printf "%.0f" "$CONTEXT_USED")
-else
-    CONTEXT_PCT="0"
-fi
+# Parse JSON values (pipe-delimited to handle spaces in model name)
+IFS='|' read -r MODEL CONTEXT_PCT <<< $(echo "$input" | jq -r '[.model.display_name, (.context_window.used_percentage // 0 | floor)] | join("|")')
+CONTEXT_PCT=${CONTEXT_PCT:-0}
 
 # Fetch real usage from Claude API (cached for 60 seconds)
 CACHE_FILE="/tmp/claude_usage_cache_${USER}"
@@ -117,30 +109,27 @@ get_timer_color() {
 
 RESET=$'\033[0m'
 
-# Build API progress bar (10 characters)
+# Build progress bars (10 characters, no loops)
+FULL="██████████"
+EMPTY="░░░░░░░░░░"
 bar_width=10
-api_filled=$(( (USAGE_PCT * bar_width) / 100 ))
-api_empty=$(( bar_width - api_filled ))
 
+api_filled=$(( (USAGE_PCT * bar_width + 50) / 100 ))
+[ $api_filled -gt $bar_width ] && api_filled=$bar_width
 API_BAR_COLOR=$(get_api_color "$USAGE_PCT")
-API_BAR="${API_BAR_COLOR}"
-for ((i=0; i<api_filled; i++)); do API_BAR+="█"; done
-for ((i=0; i<api_empty; i++)); do API_BAR+="░"; done
-API_BAR+="${RESET}"
+API_BAR="${API_BAR_COLOR}${FULL:0:$api_filled}${EMPTY:0:$((bar_width - api_filled))}${RESET}"
 
-# Build Context progress bar (10 characters)
-ctx_filled=$(( (CONTEXT_PCT * bar_width) / 100 ))
-ctx_empty=$(( bar_width - ctx_filled ))
-
+ctx_filled=$(( (CONTEXT_PCT * bar_width + 50) / 100 ))
+[ $ctx_filled -gt $bar_width ] && ctx_filled=$bar_width
 CTX_BAR_COLOR=$(get_ctx_color "$CONTEXT_PCT")
-CTX_BAR="${CTX_BAR_COLOR}"
-for ((i=0; i<ctx_filled; i++)); do CTX_BAR+="█"; done
-for ((i=0; i<ctx_empty; i++)); do CTX_BAR+="░"; done
-CTX_BAR+="${RESET}"
+CTX_BAR="${CTX_BAR_COLOR}${FULL:0:$ctx_filled}${EMPTY:0:$((bar_width - ctx_filled))}${RESET}"
 
 # Timer color
 TIMER_COLOR=$(get_timer_color "$MINUTES_REMAINING")
 
-# Output with dual progress bars and icons
-# Using printf %b for better terminal width handling with emojis
-printf '%b\n' "🤖 ${MODEL} | 🔋 ${API_BAR} ${USAGE_PCT}% | 🧠 ${CTX_BAR} ${CONTEXT_PCT}% | ${TIMER_COLOR}⏱ ${COUNTDOWN}${RESET}"
+# Fixed-width formatting
+USAGE_FMT=$(printf "%3d" "$USAGE_PCT")
+CTX_FMT=$(printf "%3d" "$CONTEXT_PCT")
+
+# Output: compact format with thin separators
+printf '%s\n' "${MODEL} │ ${API_BAR_COLOR}U:${API_BAR} ${USAGE_FMT}%${RESET} │ ${CTX_BAR_COLOR}C:${CTX_BAR} ${CTX_FMT}%${RESET} │ ${TIMER_COLOR}${COUNTDOWN}${RESET}"

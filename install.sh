@@ -4,9 +4,19 @@
 set -e
 
 CLAUDE_DIR="$HOME/.claude"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_URL_BASE="https://raw.githubusercontent.com/VladyslavAtom/ClaudeUsageStatusLine/main"
 
+# Check if running from cloned repo
+LOCAL_MODE=false
+if [ -f "$SCRIPT_DIR/statusline.sh" ] && [ -f "$SCRIPT_DIR/fetch-usage.py" ]; then
+    LOCAL_MODE=true
+fi
+
 echo "=== Claude Usage Statusline Installer ==="
+if $LOCAL_MODE; then
+    echo "    (local mode - using cloned files)"
+fi
 echo
 
 # Check dependencies
@@ -44,14 +54,19 @@ check_deps() {
     fi
 }
 
-# Download scripts
-download_scripts() {
-    echo "Downloading scripts to $CLAUDE_DIR..."
-
+# Install scripts (local copy or download)
+install_scripts() {
     mkdir -p "$CLAUDE_DIR"
 
-    curl -fsSL "$SCRIPT_URL_BASE/statusline.sh" -o "$CLAUDE_DIR/statusline.sh"
-    curl -fsSL "$SCRIPT_URL_BASE/fetch-usage.py" -o "$CLAUDE_DIR/fetch-usage.py"
+    if $LOCAL_MODE; then
+        echo "Copying scripts to $CLAUDE_DIR..."
+        cp "$SCRIPT_DIR/statusline.sh" "$CLAUDE_DIR/statusline.sh"
+        cp "$SCRIPT_DIR/fetch-usage.py" "$CLAUDE_DIR/fetch-usage.py"
+    else
+        echo "Downloading scripts to $CLAUDE_DIR..."
+        curl -fsSL "$SCRIPT_URL_BASE/statusline.sh" -o "$CLAUDE_DIR/statusline.sh"
+        curl -fsSL "$SCRIPT_URL_BASE/fetch-usage.py" -o "$CLAUDE_DIR/fetch-usage.py"
+    fi
 
     chmod +x "$CLAUDE_DIR/statusline.sh" "$CLAUDE_DIR/fetch-usage.py"
 
@@ -124,7 +139,7 @@ EOF
 main() {
     check_deps
     echo
-    download_scripts
+    install_scripts
     echo
     setup_session_key
     echo
