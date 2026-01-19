@@ -141,5 +141,6 @@ CTX_BAR+="${RESET}"
 # Timer color
 TIMER_COLOR=$(get_timer_color "$MINUTES_REMAINING")
 
-# Output with dual progress bars and emojis
-echo "🤖 ${MODEL} │ 🔋 ${API_BAR} ${USAGE_PCT}% │ 📊 ${CTX_BAR} ${CONTEXT_PCT}% │ ${TIMER_COLOR}⏰ ${COUNTDOWN}${RESET}"
+# Output with dual progress bars and icons
+# Using printf %b for better terminal width handling with emojis
+printf '%b\n' "🤖 ${MODEL} | 🔋 ${API_BAR} ${USAGE_PCT}% | 🧠 ${CTX_BAR} ${CONTEXT_PCT}% | ${TIMER_COLOR}⏱ ${COUNTDOWN}${RESET}"
