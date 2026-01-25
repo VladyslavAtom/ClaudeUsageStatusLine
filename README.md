@@ -190,8 +190,8 @@ Cyan → Blue → Purple gradient as context fills up.
 To build the binary yourself:
 
 ```bash
-# Install build dependencies
-pip install -r requirements-dev.txt
+# Install uv (if not already installed)
+curl -LsSf https://astral.sh/uv/install.sh | sh
 
 # Build
 make build

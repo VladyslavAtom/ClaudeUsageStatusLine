@@ -62,11 +62,8 @@ check_python_deps() {
         echo "Missing Python dependency: curl_cffi"
         echo
         echo "Install with:"
-        if $LOCAL_MODE && [ -f "$SCRIPT_DIR/requirements.txt" ]; then
-            echo "  pip install -r $SCRIPT_DIR/requirements.txt"
-        else
-            echo "  pip install curl_cffi"
-        fi
+        echo "  pip install curl_cffi"
+        echo "  # or with uv: uv pip install curl_cffi"
         echo
         read -p "Continue anyway? [y/N] " -n 1 -r
         echo

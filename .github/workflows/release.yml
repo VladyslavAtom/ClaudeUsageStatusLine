@@ -21,14 +21,13 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install -r requirements-dev.txt
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
 
       - name: Build binary with PyInstaller
         run: |
-          pyinstaller --clean fetch-usage.spec
+          uv sync --group dev
+          uv run pyinstaller --clean fetch-usage.spec
           chmod +x dist/claude-usage
 
       - name: Get version from tag

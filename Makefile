@@ -1,21 +1,18 @@
-.PHONY: build clean install-dev venv
-
-VENV = .venv
-PYTHON = $(VENV)/bin/python
-PIP = $(VENV)/bin/pip
-
-# Create virtual environment
-venv:
-	python -m venv $(VENV)
-	$(PIP) install -r requirements-dev.txt
+.PHONY: build clean install-dev sync
 
 # Build the standalone binary
-build: venv
-	$(VENV)/bin/pyinstaller --clean fetch-usage.spec
+build:
+	uv sync --group dev
+	uv run pyinstaller --clean fetch-usage.spec
 	@echo "Binary created: dist/claude-usage"
 
-# Install development dependencies (into venv)
-install-dev: venv
+# Install development dependencies
+install-dev:
+	uv sync --group dev
+
+# Sync dependencies
+sync:
+	uv sync
 
 # Clean build artifacts
 clean:
@@ -24,4 +21,4 @@ clean:
 
 # Clean everything including venv
 clean-all: clean
-	rm -rf $(VENV)
+	rm -rf .venv
