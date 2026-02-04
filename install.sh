@@ -3,7 +3,8 @@
 
 set -e
 
-CLAUDE_DIR="$HOME/.claude"
+# Use CLAUDE_CONFIG_DIR from env or default to ~/.claude
+CLAUDE_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude}"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 SCRIPT_URL_BASE="https://raw.githubusercontent.com/VladyslavAtom/ClaudeUsageStatusLine/main"
 RELEASE_URL="https://github.com/VladyslavAtom/ClaudeUsageStatusLine/releases/latest/download"
@@ -18,6 +19,7 @@ fi
 INSTALL_METHOD=""
 
 echo "=== Claude Usage Statusline Installer ==="
+echo "    Target directory: $CLAUDE_DIR"
 if $LOCAL_MODE; then
     echo "    (local mode - using cloned files)"
 fi
@@ -151,7 +153,7 @@ install_python() {
 
 # Configure session key
 setup_session_key() {
-    local key_file="$HOME/.claude-session-key"
+    local key_file="$CLAUDE_DIR/claude-session-key"
 
     if [ -f "$key_file" ]; then
         echo "Session key already exists at $key_file"

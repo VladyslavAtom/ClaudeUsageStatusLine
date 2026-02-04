@@ -8,7 +8,11 @@ import sys
 import os
 from datetime import datetime
 
-SESSION_KEY_FILE = os.path.expanduser("~/.claude-session-key")
+def get_config_dir():
+    """Get Claude config directory from CLAUDE_CONFIG_DIR env or default."""
+    return os.path.expanduser(os.environ.get('CLAUDE_CONFIG_DIR', '~/.claude'))
+
+SESSION_KEY_FILE = os.path.join(get_config_dir(), 'claude-session-key')
 
 def main():
     if len(sys.argv) > 1 and sys.argv[1] in ('-v', '-V', '--version'):
@@ -40,7 +44,20 @@ def main():
             print("ERROR:No organizations", file=sys.stderr)
             sys.exit(1)
 
-        org_id = orgs[0].get('uuid')
+        # Check for explicit org override in config
+        org_file = os.path.join(get_config_dir(), 'organization')
+        org = None
+        if os.path.exists(org_file):
+            with open(org_file) as f:
+                org_override = f.read().strip()
+            # Match by UUID or name
+            org = next((o for o in orgs if o.get('uuid') == org_override or o.get('name') == org_override), None)
+
+        # Fallback: prefer org with 'raven' capability (Team/Enterprise plan for Claude Code)
+        if not org:
+            org = next((o for o in orgs if 'raven' in o.get('capabilities', [])), orgs[0])
+
+        org_id = org.get('uuid')
 
         # Get usage
         usage_resp = session.get(f'https://claude.ai/api/organizations/{org_id}/usage', timeout=5)

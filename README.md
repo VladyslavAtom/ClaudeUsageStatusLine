@@ -16,6 +16,8 @@ Real-time Claude API usage tracking for Claude Code's statusline with visual pro
 - **Reset Countdown** - Know exactly when your usage window resets
 - **Color Gradients** - Visual feedback from green (low) to red (high)
 - **60-second Cache** - Minimizes API calls while staying current
+- **Multiple Profiles** - Support for separate work/personal configurations
+- **Team/Enterprise Support** - Auto-detects organization with Claude Code access
 - **Local Processing** - All data stays on your machine
 
 ## Quick Install
@@ -36,18 +38,60 @@ Both methods will:
 - Prompt for your session key
 - Configure `~/.claude/settings.json`
 
+## Multiple Profiles (Work/Personal)
+
+You can run separate Claude profiles with different config directories:
+
+```bash
+# Install to work profile
+CLAUDE_CONFIG_DIR=~/.claude-work ./install.sh
+
+# Create wrapper script for work Claude
+cat > ~/bin/claude-work << 'EOF'
+#!/bin/bash
+export CLAUDE_CONFIG_DIR="$HOME/.claude-work"
+exec claude "$@"
+EOF
+chmod +x ~/bin/claude-work
+```
+
+Each profile has its own:
+- Session key (`$CLAUDE_CONFIG_DIR/claude-session-key`)
+- Settings (`$CLAUDE_CONFIG_DIR/settings.json`)
+- Organization selection (`$CLAUDE_CONFIG_DIR/organization`)
+- Usage cache (separate per profile)
+
+## Team/Enterprise Accounts
+
+For accounts with multiple organizations (personal + team), the tool automatically selects the organization with Claude Code access (`raven` capability).
+
+To explicitly specify an organization, create an `organization` file:
+
+```bash
+# By name
+echo "My Company" > ~/.claude-work/organization
+
+# Or by UUID
+echo "f8b24ba5-0135-4f37-9c14-06731ce25980" > ~/.claude-work/organization
+```
+
+Organization selection priority:
+1. Explicit `organization` file (if exists)
+2. Auto-select org with `raven` capability (Team/Enterprise with Claude Code)
+3. First organization in the list
+
 ## Requirements
 
 ### Binary Installation (Recommended)
 - Linux x86_64
 - `jq` - JSON processor
-- Claude Pro or Max subscription
+- Claude Pro, Max, or Team subscription
 
 ### Python Installation
 - Linux (tested on Arch, Ubuntu, Debian)
 - `jq` - JSON processor
 - `python3` with `curl_cffi` library
-- Claude Pro or Max subscription
+- Claude Pro, Max, or Team subscription
 
 ## Manual Installation
 
@@ -86,8 +130,8 @@ pip install curl_cffi
 
 ```bash
 # Save the session key (replace with your actual key)
-echo "sk-ant-sid01-xxxxx..." > ~/.claude-session-key
-chmod 600 ~/.claude-session-key
+echo "sk-ant-sid01-xxxxx..." > ~/.claude/claude-session-key
+chmod 600 ~/.claude/claude-session-key
 ```
 
 > **Note**: Session keys expire periodically. If the statusline shows `--` for the timer, refresh your session key.
@@ -185,6 +229,21 @@ Cyan → Blue → Purple gradient as context fills up.
 3. `claude-usage` (or `fetch-usage.py`) fetches API usage from claude.ai (cached for 60 seconds)
 4. Renders colored progress bars with ANSI escape codes
 
+## Configuration Files
+
+All configuration is stored in `$CLAUDE_CONFIG_DIR` (default: `~/.claude`):
+
+| File | Description |
+|------|-------------|
+| `claude-session-key` | Your claude.ai session cookie (required) |
+| `settings.json` | Claude Code settings including statusline config |
+| `organization` | Explicit org selection by name or UUID (optional) |
+| `statusline.sh` | The statusline script |
+| `claude-usage` | Binary or `fetch-usage.py` script |
+
+Environment variables:
+- `CLAUDE_CONFIG_DIR` - Override config directory (default: `~/.claude`)
+
 ## Building from Source
 
 To build the binary yourself:
@@ -205,7 +264,7 @@ make build
 
 - **Expired session key**: Get a fresh `sessionKey` from claude.ai cookies
 - **Network issues**: Check if you can reach claude.ai
-- **File permissions**: Ensure `~/.claude-session-key` is readable
+- **File permissions**: Ensure `~/.claude/claude-session-key` is readable
 
 ### Script not running
 
@@ -220,8 +279,8 @@ echo '{"model":{"display_name":"Test"},"context_window":{}}' | ~/.claude/statusl
 ### Cache issues
 
 ```bash
-# Clear the usage cache
-rm /tmp/claude_usage_cache_$USER
+# Clear all usage caches
+rm /tmp/claude_usage_cache_${USER}_*
 ```
 
 ## Credits

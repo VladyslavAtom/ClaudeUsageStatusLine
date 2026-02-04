@@ -10,11 +10,14 @@ IFS='|' read -r MODEL CONTEXT_PCT <<< $(echo "$input" | jq -r '[.model.display_n
 CONTEXT_PCT=${CONTEXT_PCT:-0}
 
 # Fetch real usage from Claude API (cached for 60 seconds)
-CACHE_FILE="/tmp/claude_usage_cache_${USER}"
-CACHE_AGE=60
-
-# Get script directory for finding fetch executable
+# Get config directory (from env or script location)
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$SCRIPT_DIR}"
+
+# Cache file includes config dir hash to avoid conflicts between profiles
+CONFIG_HASH=$(echo -n "$CLAUDE_CONFIG_DIR" | md5sum | cut -c1-8)
+CACHE_FILE="/tmp/claude_usage_cache_${USER}_${CONFIG_HASH}"
+CACHE_AGE=60
 
 # Determine which executable to use (binary preferred over Python)
 FETCH_CMD=""
@@ -30,7 +33,7 @@ if [ -f "$CACHE_FILE" ] && [ $(($(date +%s) - $(stat -c %Y "$CACHE_FILE" 2>/dev/
 else
     # Try to fetch fresh usage data
     if [ -n "$FETCH_CMD" ]; then
-        USAGE_DATA=$("$FETCH_CMD" 2>/dev/null)
+        USAGE_DATA=$(CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR" "$FETCH_CMD" 2>/dev/null)
         if [ $? -eq 0 ] && [ -n "$USAGE_DATA" ]; then
             echo "$USAGE_DATA" > "$CACHE_FILE"
         else
